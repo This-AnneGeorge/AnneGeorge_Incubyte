@@ -66,6 +66,10 @@ class VehicleCreate(BaseModel):
     quantity: int = PydanticField(ge=0)
 
 
+class RestockRequest(BaseModel):
+    amount: int = PydanticField(gt=0)
+
+
 class VehicleResponse(BaseModel):
     id: int
     make: str
@@ -121,6 +125,16 @@ def create_app(database_url: str = "sqlite:///./dealership.db") -> FastAPI:
 
         return user
 
+    def require_admin(
+        current_user: User = Depends(get_current_user),
+    ) -> User:
+        if current_user.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required",
+            )
+        return current_user
+
     @app.post(
         "/api/auth/register",
         response_model=UserResponse,
@@ -174,6 +188,12 @@ def create_app(database_url: str = "sqlite:///./dealership.db") -> FastAPI:
                 algorithm="HS256",
             )
             return TokenResponse(access_token=token, token_type="bearer")
+
+    @app.get("/api/auth/me", response_model=UserResponse)
+    def get_my_profile(
+        current_user: User = Depends(get_current_user),
+    ):
+        return current_user
 
     @app.post(
         "/api/vehicles",
@@ -235,6 +255,49 @@ def create_app(database_url: str = "sqlite:///./dealership.db") -> FastAPI:
         with Session(engine) as session:
             return session.exec(statement).all()
 
+    @app.put("/api/vehicles/{vehicle_id}", response_model=VehicleResponse)
+    def update_vehicle(
+        vehicle_id: int,
+        request: VehicleCreate,
+        current_user: User = Depends(get_current_user),
+    ):
+        with Session(engine) as session:
+            vehicle = session.get(Vehicle, vehicle_id)
+
+            if vehicle is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Vehicle not found",
+                )
+
+            for field_name, value in request.model_dump().items():
+                setattr(vehicle, field_name, value)
+
+            session.add(vehicle)
+            session.commit()
+            session.refresh(vehicle)
+            return vehicle
+
+    @app.delete(
+        "/api/vehicles/{vehicle_id}",
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
+    def delete_vehicle(
+        vehicle_id: int,
+        admin: User = Depends(require_admin),
+    ):
+        with Session(engine) as session:
+            vehicle = session.get(Vehicle, vehicle_id)
+
+            if vehicle is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Vehicle not found",
+                )
+
+            session.delete(vehicle)
+            session.commit()
+
     @app.post(
         "/api/vehicles/{vehicle_id}/purchase",
         response_model=VehicleResponse,
@@ -265,6 +328,31 @@ def create_app(database_url: str = "sqlite:///./dealership.db") -> FastAPI:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="Vehicle is out of stock",
+                )
+
+            session.commit()
+            return session.get(Vehicle, vehicle_id)
+
+    @app.post(
+        "/api/vehicles/{vehicle_id}/restock",
+        response_model=VehicleResponse,
+    )
+    def restock_vehicle(
+        vehicle_id: int,
+        request: RestockRequest,
+        admin: User = Depends(require_admin),
+    ):
+        with Session(engine) as session:
+            result = session.execute(
+                update(Vehicle)
+                .where(Vehicle.id == vehicle_id)
+                .values(quantity=Vehicle.quantity + request.amount)
+            )
+
+            if result.rowcount != 1:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Vehicle not found",
                 )
 
             session.commit()
