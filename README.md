@@ -172,3 +172,10 @@ I used **ChatGPT** as a step-by-step coding assistant for this project. It helpe
 AI made it faster to scaffold and iterate through the Red–Green steps of TDD. I still needed to verify the output: a generated answer does not prove that code runs, that permissions are correct, or that the frontend reaches the API. The test results and browser checks in this repository reflect that verification.
 
 The raw AI conversation is provided in [PROMPTS.md](PROMPTS.md).
+
+## Live Deployment
+
+- Frontend: https://kind-bush-0cefb9800.6.azurestaticapps.net
+- API documentation: https://motora-demo-api-1-e4gcb9hefcgdd5fm.westindia-01.azurewebsites.net/docs
+
+The frontend runs on Azure Static Web Apps, the FastAPI backend on Azure App Service, and the database on Azure Database for PostgreSQL. Register a new account to try the inventory; admin access must be granted separately.
