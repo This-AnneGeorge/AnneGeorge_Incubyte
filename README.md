@@ -134,7 +134,7 @@ From the `backend` directory, run:
 .\.venv\Scripts\python.exe -m pytest tests -q --cov=app --cov-report=term-missing
 ```
 
-The recorded run passed **12 tests** with **92% backend line coverage**. See [TEST_REPORT.md](TEST_REPORT.md) for the measured output, tested behaviors, and warnings.
+The recorded run passed **15 tests** with **93% backend line coverage**. See [TEST_REPORT.md](TEST_REPORT.md) for the measured output, tested behaviors, and warnings.
 
 To check the frontend build, run from `frontend`:
 
