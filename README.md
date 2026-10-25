@@ -171,4 +171,4 @@ I used **ChatGPT** as a step-by-step coding assistant for this project. It helpe
 
 AI made it faster to scaffold and iterate through the Red–Green steps of TDD. I still needed to verify the output: a generated answer does not prove that code runs, that permissions are correct, or that the frontend reaches the API. The test results and browser checks in this repository reflect that verification.
 
-The raw AI conversation or its public link is provided in [PROMPTS.md](PROMPTS.md).
+The raw AI conversation is provided in [PROMPTS.md](PROMPTS.md).
