@@ -1,7 +1,8 @@
 import argparse
 
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, select
 
+from app.database import make_engine
 from app.main import User
 
 
@@ -13,10 +14,7 @@ def main():
     args = parser.parse_args()
 
     email = args.email.strip().lower()
-    engine = create_engine(
-        "sqlite:///./dealership.db",
-        connect_args={"check_same_thread": False},
-    )
+    engine = make_engine()
 
     with Session(engine) as session:
         user = session.exec(

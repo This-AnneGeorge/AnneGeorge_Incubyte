@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from pydantic import (
@@ -15,7 +16,9 @@ from pydantic import (
 )
 from pwdlib import PasswordHash
 from sqlalchemy import update
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Session, SQLModel, select
+
+from app.database import make_engine
 
 
 class User(SQLModel, table=True):
@@ -96,15 +99,32 @@ password_hasher = PasswordHash.recommended()
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def create_app(database_url: str = "sqlite:///./dealership.db") -> FastAPI:
-    engine = create_engine(
-        database_url,
-        connect_args={"check_same_thread": False},
-    )
+def create_app(database_url: str | None = None) -> FastAPI:
+    engine = make_engine(database_url)
     SQLModel.metadata.create_all(engine)
 
-    secret_key = os.getenv("JWT_SECRET_KEY") or secrets.token_urlsafe(32)
+    configured_secret = os.getenv("JWT_SECRET_KEY")
+    if os.getenv("APP_ENV") == "production" and not configured_secret:
+        raise RuntimeError("JWT_SECRET_KEY is required in production")
+
+    secret_key = configured_secret or secrets.token_urlsafe(32)
     app = FastAPI(title="Car Dealership Inventory API")
+
+    origins = [
+        origin.strip().rstrip("/")
+        for origin in os.getenv(
+            "CORS_ORIGINS",
+            "http://localhost:5173",
+        ).split(",")
+        if origin.strip()
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
     def get_current_user(
         credentials: HTTPAuthorizationCredentials | None = Depends(

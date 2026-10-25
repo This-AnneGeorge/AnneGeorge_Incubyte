@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
 const emptyFilters = {
   make: '',
   model: '',
@@ -26,7 +28,7 @@ const currency = new Intl.NumberFormat('en-US', {
 })
 
 async function api(path, { token, ...options } = {}) {
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       ...(options.body ? { 'Content-Type': 'application/json' } : {}),
@@ -513,7 +515,10 @@ function App() {
             </p>
 
             {error && (
-              <div role="alert" className="mt-5 rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-sm text-rose-200">
+              <div
+                role="alert"
+                className="mt-5 rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-sm text-rose-200"
+              >
                 {error}
               </div>
             )}
@@ -637,12 +642,18 @@ function App() {
         </section>
 
         {error && (
-          <div role="alert" className="mt-6 rounded-xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-rose-200">
+          <div
+            role="alert"
+            className="mt-6 rounded-xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-rose-200"
+          >
             {error}
           </div>
         )}
         {notice && (
-          <div role="status" className="mt-6 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200">
+          <div
+            role="status"
+            className="mt-6 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-200"
+          >
             {notice}
           </div>
         )}
@@ -653,7 +664,10 @@ function App() {
             ['Vehicles in stock', totalStock],
             ['Ready to purchase', vehicles.filter((v) => v.quantity > 0).length],
           ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl border border-white/10 bg-[#171d28] p-5">
+            <div
+              key={label}
+              className="rounded-2xl border border-white/10 bg-[#171d28] p-5"
+            >
               <p className="text-2xl font-semibold text-white">{value}</p>
               <p className="mt-1 text-xs uppercase tracking-wider text-slate-400">
                 {label}
@@ -698,7 +712,13 @@ function App() {
                       setForm({ ...form, [field]: event.target.value })
                     }
                     className={`${inputClass} mt-2`}
-                    placeholder={field === 'make' ? 'e.g. Toyota' : field === 'model' ? 'e.g. Corolla' : 'e.g. Sedan'}
+                    placeholder={
+                      field === 'make'
+                        ? 'e.g. Toyota'
+                        : field === 'model'
+                          ? 'e.g. Corolla'
+                          : 'e.g. Sedan'
+                    }
                   />
                 </label>
               ))}
