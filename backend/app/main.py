@@ -7,7 +7,12 @@ import jwt
 from fastapi import Depends, FastAPI, HTTPException, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
-from pydantic import BaseModel, EmailStr, Field as PydanticField
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field as PydanticField,
+    field_validator,
+)
 from pwdlib import PasswordHash
 from sqlalchemy import update
 from sqlmodel import Field, Session, SQLModel, create_engine, select
@@ -64,6 +69,14 @@ class VehicleCreate(BaseModel):
         decimal_places=2,
     )
     quantity: int = PydanticField(ge=0)
+
+    @field_validator("make", "model", "category")
+    @classmethod
+    def strip_and_validate_text(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("must not be blank")
+        return cleaned
 
 
 class RestockRequest(BaseModel):
